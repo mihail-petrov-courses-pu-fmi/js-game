@@ -3,44 +3,25 @@ var BoardManager = {};
 BoardManager.init = function(canvas) {
     
     _this           = this;
-    this.canvas     = canvas;
-    this.context    = this.canvas.getContext('2d');
+    _this.canvas     = canvas;
+    _this.context    = _this.canvas.getContext('2d');
 
     // Reference pointers
-    this.snakeReference         = null;
+    _this.snakeReference         = null;
 
     // 
-    this.characterCollection    = [];
-    this.gameDirection          = BoardConfig.DIRECTION.RIGHT;
+    _this.characterCollection    = [];
+    _this.gameDirection          = BoardConfig.DIRECTION.RIGHT;
 
-    this.loadLevel();
+    _this.loadLevel();
 
-    setInterval(this.gameLoop, 400);
-    this.render();
+    _this.gameLoopReference = setInterval(_this.gameLoop, BoardConfig.GAME_LOOP);
+    _this.render();
 };
 
 BoardManager.loadLevel = function() {
 
-    // console.log('**');
-    // console.log(this);
-
-    // function testWithName() {
-    //     console.log('**');
-    //     console.log(this);
-    // }
-
-    // testWithName();
-
-
-    // (function() {
-    //     console.log('**');
-    //     console.log(this);
-    // })();
-
     var loadFood = function() {
-        
-        // console.log('**');
-        // console.log(this);
 
         // init food 
         var FoodMap = [
@@ -61,6 +42,26 @@ BoardManager.loadLevel = function() {
 
     loadFood();
 
+    var loadObstacle = function() {
+
+        // init food 
+        var ObstacleMap = [
+            { row: 5    , col: 15  },
+            { row: 10   , col: 2  },
+            { row: 9    , col: 16  },
+        ];
+
+        for(var i = 0; i < ObstacleMap.length; i++) {
+            
+            var obstacleCoordinate  = ObstacleMap[i];
+            var obstacleReference   = new Obstacle(obstacleCoordinate); 
+            _this.characterCollection.push(obstacleReference);
+        }
+    };
+
+    loadObstacle();
+
+
     var loadSnake = function() {
         
         _this.snakeReference = new Snake({
@@ -68,7 +69,8 @@ BoardManager.loadLevel = function() {
             col : 3
         });
 
-        _this.characterCollection.push(_this.snakeReference);
+        // Remove the Snake character
+        // _this.characterCollection.push(_this.snakeReference);
     };
 
     loadSnake();
@@ -76,22 +78,27 @@ BoardManager.loadLevel = function() {
 
 BoardManager.gameLoop = function() {
 
-    if(_this.gameDirection == BoardConfig.DIRECTION.LEFT) {
-        _this.snakeReference.moveLeft();
-    }
+    // Snake move logic
+    // ====================================================
+    _this.snakeReference.move(_this.gameDirection);
 
-    if(_this.gameDirection == BoardConfig.DIRECTION.RIGHT) {
-        _this.snakeReference.moveRight();
+    // Collision detection logic
+    // ====================================================
+    for(var i = 0; i < _this.characterCollection.length; i++) {
+        
+        if(_this.characterCollection[i].doesCollide(_this.snakeReference.row, _this.snakeReference.col)) {
+            
+            if(_this.characterCollection[i].isDeadly()) {
+                clearInterval(_this.gameLoopReference);
+            }
+
+            if(_this.characterCollection[i].isConsumable()) {
+                _this.snakeReference.grow(_this.gameDirection);
+            }
+        }
     }
     
-    if(_this.gameDirection == BoardConfig.DIRECTION.UP) {
-        _this.snakeReference.moveUp();
-    }
-    
-    if(_this.gameDirection == BoardConfig.DIRECTION.DOWN) {
-        _this.snakeReference.moveDown();
-    }    
-    
+    _this.clear();
     _this.render(_this.context);
 };
 
@@ -104,18 +111,20 @@ BoardManager.setDirection = function(direction) {
         'ArrowDown'     : BoardConfig.DIRECTION.DOWN,
     };
  
-    // this.gameDirection = (DirectionMap[direction])      ? 
-    //                         DirectionMap[direction]     :
-    //                         this.gameDirection; 
-
     if(DirectionMap[direction]) {
-        this.gameDirection = DirectionMap[direction];
+        _this.gameDirection = DirectionMap[direction];
     }
 };
 
 BoardManager.render = function() {
 
-    for(var i = 0; i < this.characterCollection.length; i++) {
-        this.characterCollection[i].render(this.context);
+    for(var i = 0; i < _this.characterCollection.length; i++) {
+        _this.characterCollection[i].render(_this.context);
     }
+
+    _this.snakeReference.render(_this.context);
+};
+
+BoardManager.clear = function() {
+    _this.context.clearRect(0, 0, _this.canvas.width, _this.canvas.height);
 };

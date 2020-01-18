@@ -11,6 +11,21 @@ var Food = function(constructorObject) {
     }) 
 };
 
+Food.prototype.doesCollide = function(row, col) {
+
+    return (this.row == row) &&
+           (this.col == col); 
+};
+
+Food.prototype.isConsumable = function() {
+    return true;
+};
+
+Food.prototype.isDeadly = function() {
+    return false;
+};
+
 Food.prototype.render = function(context) {
     this.tileReferance.render(context);
 };
+
